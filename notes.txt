@@ -1,0 +1,5 @@
+3 * 3 * 3 = 27
+
+27 input board state + 1 (X or O turn) state  -> eh, for now do always X
+
+9 labels 
