@@ -6,21 +6,67 @@ from create_training_data import *
 import tensorflow as tf
 import itertools
 import json
+import mlp_with_hidden as mlp
 
 class TinyDerpyModel:
     x = None
-    W = None
-    b = None
     y = None
     y_ = None
     train_step = None
 
+def weight_variable(shape):
+  initial = tf.truncated_normal(shape, stddev=0.1)
+  return tf.Variable(initial)
+
+def bias_variable(shape):
+  initial = tf.constant(0.1, shape=shape)
+  return tf.Variable(initial)
+
+def get_model_fully_connected():
+
+    tdm = TinyDerpyModel()
+    tdm.x = tf.placeholder(tf.float32, [None, 19])
+
+    W = weight_variable([19, 9])
+    b = bias_variable([9])
+    y_temp = tf.nn.relu(tf.matmul(tdm.x, W) + b)
+
+    #densly connected layer
+    W_fc1 = weight_variable([9, 9])
+    b_fc1 = bias_variable([9])
+
+    tdm.y = tf.nn.softmax(tf.matmul(y_temp, W_fc1) + b_fc1) #readout
+
+    tdm.y_ = tf.placeholder(tf.float32, [None, 9])
+
+    cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=tdm.y_, logits=tdm.y))
+
+    tdm.train_step = tf.train.GradientDescentOptimizer(2.0).minimize(cross_entropy)
+
+    return tdm
+
+def get_model_fully_connected_new():
+
+    tdm = TinyDerpyModel()
+    tdm.x = tf.placeholder(tf.float32, [None, 19])
+
+    tdm.y = mlp.create_mlp(tdm.x)
+
+    tdm.y_ = tf.placeholder(tf.float32, [None, 9])
+
+    cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=tdm.y_, logits=tdm.y))
+    optimizer = tf.train.AdamOptimizer(learning_rate=0.001)
+    tdm.train_step = optimizer.minimize(cross_entropy)
+    #tdm.train_step = tf.train.GradientDescentOptimizer(2.0).minimize(cross_entropy)
+
+    return tdm
+
 def get_model():
     tdm = TinyDerpyModel()
     tdm.x = tf.placeholder(tf.float32, [None, 19])
-    tdm.W = tf.Variable(tf.zeros([19, 9]))
-    tdm.b = tf.Variable(tf.zeros([9]))
-    tdm.y = tf.nn.softmax(tf.matmul(tdm.x, tdm.W) + tdm.b)
+    W = tf.Variable(tf.zeros([19, 9]))
+    b = tf.Variable(tf.zeros([9]))
+    tdm.y = tf.nn.softmax(tf.matmul(tdm.x, W) + b)
     tdm.y_ = tf.placeholder(tf.float32, [None, 9])
 
     #cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
@@ -56,7 +102,7 @@ def load_training_data_files():
     return batch_xs_list, batch_ys_list
 
 def run_training(sess, saver, tdm, batch_xs_list, batch_ys_list):
-    for i in range(0,1000):
+    for i in range(0,50000):
         sess.run(tdm.train_step, feed_dict={tdm.x: batch_xs_list, tdm.y_: batch_ys_list})
 
     correct_prediction = tf.equal(tf.argmax(tdm.y,1), tf.argmax(tdm.y_,1))
@@ -113,7 +159,7 @@ def run_testing(sess, tdm):
 def main_program():
     args = process_command_line_args()
 
-    tdm = get_model()
+    tdm = get_model_fully_connected_new() #get_model_fully_connected() #get_model()
     sess = tf.InteractiveSession()
     tf.global_variables_initializer().run()
     saver = tf.train.Saver()

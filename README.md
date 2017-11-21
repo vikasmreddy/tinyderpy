@@ -9,11 +9,8 @@ docker ps
 
 then find the container_id of tensorflow/tensorflow and run
 
+docker exec -it 406aaa3fe58a bash -c "cd /home/tinyderpy && [one of the ones below]"
 docker exec -it container_id bash
-
-*To run stuff:*
-
-go to /home/tinyderpy
 
 *Run one of these:*
 
