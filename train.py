@@ -27,29 +27,6 @@ def get_model_fully_connected():
     tdm = TinyDerpyModel()
     tdm.x = tf.placeholder(tf.float32, [None, 19])
 
-    W = weight_variable([19, 9])
-    b = bias_variable([9])
-    y_temp = tf.nn.relu(tf.matmul(tdm.x, W) + b)
-
-    #densly connected layer
-    W_fc1 = weight_variable([9, 9])
-    b_fc1 = bias_variable([9])
-
-    tdm.y = tf.nn.softmax(tf.matmul(y_temp, W_fc1) + b_fc1) #readout
-
-    tdm.y_ = tf.placeholder(tf.float32, [None, 9])
-
-    cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=tdm.y_, logits=tdm.y))
-
-    tdm.train_step = tf.train.GradientDescentOptimizer(2.0).minimize(cross_entropy)
-
-    return tdm
-
-def get_model_fully_connected_new():
-
-    tdm = TinyDerpyModel()
-    tdm.x = tf.placeholder(tf.float32, [None, 19])
-
     tdm.y = mlp.create_mlp(tdm.x)
 
     tdm.y_ = tf.placeholder(tf.float32, [None, 9])
@@ -57,22 +34,23 @@ def get_model_fully_connected_new():
     cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=tdm.y_, logits=tdm.y))
     optimizer = tf.train.AdamOptimizer(learning_rate=0.001)
     tdm.train_step = optimizer.minimize(cross_entropy)
-    #tdm.train_step = tf.train.GradientDescentOptimizer(2.0).minimize(cross_entropy)
 
     return tdm
 
-def get_model():
+def get_linear_regression_model():
     tdm = TinyDerpyModel()
     tdm.x = tf.placeholder(tf.float32, [None, 19])
-    W = tf.Variable(tf.zeros([19, 9]))
-    b = tf.Variable(tf.zeros([9]))
-    tdm.y = tf.nn.softmax(tf.matmul(tdm.x, W) + b)
+    W = tf.Variable(tf.random_normal([19, 9]))
+    b = tf.Variable(tf.random_normal([9]))
+    tdm.y = tf.matmul(tdm.x, W) + b
     tdm.y_ = tf.placeholder(tf.float32, [None, 9])
 
     #cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
     cross_entropy = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=tdm.y_, logits=tdm.y))
 
-    tdm.train_step = tf.train.GradientDescentOptimizer(3.0).minimize(cross_entropy)
+    optimizer = tf.train.AdamOptimizer(learning_rate=0.001)
+
+    tdm.train_step = optimizer.minimize(cross_entropy) #tf.train.GradientDescentOptimizer(3.0).minimize(cross_entropy)
 
     return tdm
 
@@ -159,7 +137,8 @@ def run_testing(sess, tdm):
 def main_program():
     args = process_command_line_args()
 
-    tdm = get_model_fully_connected_new() #get_model_fully_connected() #get_model()
+    #YOU CAN SWITCH TO LINEAR REGRESSION HERE BUT YOU NEED TO RUN THE TRAIN STEP
+    tdm = get_model_fully_connected() #get_linear_regression_model()
     sess = tf.InteractiveSession()
     tf.global_variables_initializer().run()
     saver = tf.train.Saver()
